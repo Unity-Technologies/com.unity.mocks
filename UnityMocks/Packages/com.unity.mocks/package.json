@@ -1,0 +1,15 @@
+{
+  "name": "com.unity.mocks",
+  "displayName": "Unity Mocks",
+  "version": "0.1.0-preview.1",
+  "unity": "2019.1",
+  "description": "Tooling and configurations to support mocking of anything in Unity.",
+  "keywords": [
+    "unity",
+    "tests",
+    "mocks"
+  ],
+  "dependencies": {
+    "nuget.shouldly": "3.0.0"
+  }
+}

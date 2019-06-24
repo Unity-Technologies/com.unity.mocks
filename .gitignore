@@ -2,6 +2,13 @@
 
 artifacts/**
 build/**
+obj
+obj.meta
+**/bin/Debug
+Debug.meta
+**/bin/Release
+Release.meta
+bin.meta
 .DS_Store
 .npmrc
 

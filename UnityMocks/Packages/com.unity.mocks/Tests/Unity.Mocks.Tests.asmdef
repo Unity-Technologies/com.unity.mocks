@@ -1,0 +1,22 @@
+{
+    "name": "Unity.Coding.Tests",
+    "references": [
+        "Unity.Mocks.Utils",
+        "NSubstitute.Elevated"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Shouldly.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}
