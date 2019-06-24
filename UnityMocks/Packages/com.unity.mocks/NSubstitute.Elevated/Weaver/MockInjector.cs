@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Security.Policy;
+using System.Security.Cryptography;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
@@ -25,12 +26,14 @@ namespace NSubstitute.Elevated.Weaver
 
         static MockInjector()
         {
-            var assemblyHash = MockTypesAssembly.Evidence.GetHostEvidence<Hash>();
-            if (assemblyHash == null)
-                throw new Exception("Assembly not stamped with a hash");
-
             k_MarkAsPatchedKey = MockTypesAssembly.GetName().Name;
-            k_MarkAsPatchedValue = assemblyHash.SHA1.ToHexString();
+
+            var assemblyBits = File.ReadAllBytes(MockTypesAssembly.Location);
+            using (var md5 = MD5.Create())
+            {
+                var hash = md5.ComputeHash(assemblyBits);
+                k_MarkAsPatchedValue = hash.ToHexString();
+            }
         }
 
         public MockInjector()
