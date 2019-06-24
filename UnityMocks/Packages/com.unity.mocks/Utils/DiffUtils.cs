@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Unity.Coding.Utils
+namespace Unity.Utils
 {
     public static class DiffUtils
     {

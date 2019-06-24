@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
-using Unity.Coding.Utils;
+using Unity.Utils;
 
 namespace NiceIO.Tests
 {

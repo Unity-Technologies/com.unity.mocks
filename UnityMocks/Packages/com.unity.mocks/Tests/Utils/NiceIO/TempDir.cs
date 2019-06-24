@@ -1,5 +1,5 @@
 using System;
-using Unity.Coding.Utils;
+using Unity.Utils;
 
 namespace NiceIO.Tests
 {

@@ -2,13 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using NiceIO;
 using NSubstitute.Core;
 using NSubstitute.Core.Arguments;
 using NSubstitute.Elevated.Weaver;
 using NSubstitute.Exceptions;
 using NSubstitute.Routing;
-using Unity.Core;
+using Unity.Utils;
 
 namespace NSubstitute.Elevated
 {

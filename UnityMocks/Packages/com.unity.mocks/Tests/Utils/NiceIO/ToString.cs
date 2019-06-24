@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
-using Unity.Coding.Utils;
+using Unity.Utils;
 
 namespace NiceIO.Tests
 {

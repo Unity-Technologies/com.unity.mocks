@@ -6,8 +6,7 @@ using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
 using Mono.Cecil;
-using NiceIO;
-using Unity.Core;
+using Unity.Utils;
 
 namespace NSubstitute.Elevated.Weaver
 {

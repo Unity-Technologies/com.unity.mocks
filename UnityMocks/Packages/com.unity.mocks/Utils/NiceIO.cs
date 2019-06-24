@@ -30,7 +30,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace Unity.Coding.Utils
+namespace Unity.Utils
 {
     public class NPath : IEquatable<NPath>, IComparable
     {

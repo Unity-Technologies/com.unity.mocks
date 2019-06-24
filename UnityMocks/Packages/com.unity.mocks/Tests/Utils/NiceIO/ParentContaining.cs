@@ -4,7 +4,7 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using NUnit.Framework;
-using Unity.Coding.Utils;
+using Unity.Utils;
 
 namespace NiceIO.Tests
 {

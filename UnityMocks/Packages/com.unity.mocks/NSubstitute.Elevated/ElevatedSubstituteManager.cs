@@ -9,7 +9,7 @@ using NSubstitute.Exceptions;
 using NSubstitute.Proxies;
 using NSubstitute.Proxies.CastleDynamicProxy;
 using NSubstitute.Proxies.DelegateProxy;
-using Unity.Core;
+using Unity.Utils;
 using TypeAttributes = Mono.Cecil.TypeAttributes;
 
 namespace NSubstitute.Elevated

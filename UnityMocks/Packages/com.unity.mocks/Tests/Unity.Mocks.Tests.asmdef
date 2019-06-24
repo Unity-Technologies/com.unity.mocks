@@ -1,8 +1,9 @@
 {
-    "name": "Unity.Coding.Tests",
+    "name": "Unity.Mocks.Tests",
     "references": [
         "Unity.Mocks.Utils",
-        "NSubstitute.Elevated"
+        "NSubstitute.Elevated",
+        "SystemUnderTest"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"
@@ -14,7 +15,11 @@
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
-        "Shouldly.dll"
+        "Shouldly.dll",
+        "Mono.Cecil.dll",
+        "Mono.Cecil.Rocks.dll",
+        "NSubstitute.dll",
+        "System.Threading.Tasks.Extensions.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],

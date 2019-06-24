@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using Shouldly;
-using Unity.Coding.Utils;
+using Unity.Utils;
 
 namespace Utils
 {

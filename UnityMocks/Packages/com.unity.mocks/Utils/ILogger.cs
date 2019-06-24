@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Unity.Coding.Utils
+namespace Unity.Utils
 {
     public interface ILogger
     {

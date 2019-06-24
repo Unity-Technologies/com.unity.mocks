@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 
-namespace Unity.Coding.Utils
+namespace Unity.Utils
 {
     public class ReadOnlyDictionary
     {

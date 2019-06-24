@@ -6,7 +6,7 @@ using JetBrains.Annotations;
 // ReSharper disable InconsistentNaming
 #pragma warning disable 169
 
-namespace Unity.Coding.Utils
+namespace Unity.Utils
 {
     // $ do not use #if's for platforms. keep the binaries universal so we can build and post just
     //   one set of them to the package for CLI usage.

@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using NSubstitute.Core;
-using Unity.Core;
+using Unity.Utils;
 
 // this namespace contains types that must be public in order to be usable from patched assemblies, yet
 // we do not want used from normal client api

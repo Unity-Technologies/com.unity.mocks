@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Unity.Core;
+using Unity.Utils;
 
 namespace NSubstitute.Elevated.Weaver
 {

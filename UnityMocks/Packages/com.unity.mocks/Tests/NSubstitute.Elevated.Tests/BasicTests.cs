@@ -1,10 +1,10 @@
 using System;
 using System.Security;
 using SystemUnderTest;
-using NiceIO;
 using NSubstitute.Exceptions;
 using NUnit.Framework;
 using Shouldly;
+using Unity.Utils;
 
 namespace NSubstitute.Elevated.Tests
 {

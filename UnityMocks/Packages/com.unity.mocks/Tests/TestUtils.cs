@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using Shouldly;
-using Unity.Coding.Utils;
+using Unity.Utils;
 
 namespace Unity.Coding.Tests
 {
@@ -51,8 +51,14 @@ namespace Unity.Coding.Tests
             BaseDir = TestDirectory.ToNPath().Combine("testfs");
 
             // assume that we are running in the Unity Editor, where the working directory is always the project root
-            PackageDir = "Packages/com.unity.coding".ToNPath();
+            PackageDir = "Packages/com.unity.blah".ToNPath();
 
+            #if UNITY_EDITOR
+
+            PackageDir.DirectoryMustExist();
+
+            #else
+            
             // if doesn't exist, must be running pure test outside unity. try to find project root.
             if (!PackageDir.DirectoryExists())
             {
@@ -60,6 +66,8 @@ namespace Unity.Coding.Tests
                 while (!PackageDir.DirectoryExists())
                     Environment.CurrentDirectory = NPath.CurrentDirectory.Parent;
             }
+
+            #endif
         }
 
         [OneTimeTearDown]

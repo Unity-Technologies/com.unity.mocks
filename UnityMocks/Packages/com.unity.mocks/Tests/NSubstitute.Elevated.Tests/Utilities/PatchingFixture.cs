@@ -3,10 +3,9 @@ using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
-using NiceIO;
 using NSubstitute.Elevated.Weaver;
 using Shouldly;
-using Unity.Core;
+using Unity.Utils;
 
 namespace NSubstitute.Elevated.Tests.Utilities
 {

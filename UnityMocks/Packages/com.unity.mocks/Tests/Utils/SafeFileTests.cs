@@ -3,7 +3,7 @@ using System.IO;
 using NUnit.Framework;
 using Shouldly;
 using Unity.Coding.Tests;
-using Unity.Coding.Utils;
+using Unity.Utils;
 
 namespace Utils
 {

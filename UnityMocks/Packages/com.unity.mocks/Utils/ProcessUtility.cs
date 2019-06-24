@@ -5,9 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using JetBrains.Annotations;
-using Unity.Coding.Utils;
+using Unity.Utils;
 
-namespace Unity.Coding.Editor
+namespace Unity.Utils
 {
     [PublicAPI]
     public static class ProcessUtility

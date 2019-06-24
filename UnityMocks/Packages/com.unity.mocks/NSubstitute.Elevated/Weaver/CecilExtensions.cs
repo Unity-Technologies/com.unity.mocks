@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using Mono.Cecil;
-using Unity.Core;
 
 namespace NSubstitute.Elevated.Weaver
 {

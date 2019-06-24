@@ -10,6 +10,7 @@
     "mocks"
   ],
   "dependencies": {
-    "nuget.shouldly": "3.0.0"
+    "nuget.shouldly": "3.0.0",
+    "nuget.nsubstitute": "3.1.0"
   }
 }

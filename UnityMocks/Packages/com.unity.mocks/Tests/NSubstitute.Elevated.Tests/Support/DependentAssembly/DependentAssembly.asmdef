@@ -1,9 +1,9 @@
 {
-    "name": "NSubstitute.Elevated",
-    "references":[
-        "Unity.Mocks.Utils"
+    "name": "DependentAssembly",
+    "references": [
     ],
-    "optionalUnityReferences": [],
+    "optionalUnityReferences": [
+    ],
     "includePlatforms": [
         "Editor"
     ],
@@ -11,10 +11,6 @@
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
-        "Mono.Cecil.dll",
-        "Mono.Cecil.Rocks.dll",
-        "NSubstitute.dll",
-        "System.Threading.Tasks.Extensions.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [],

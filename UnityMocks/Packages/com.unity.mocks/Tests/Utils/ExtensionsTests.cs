@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using NUnit.Framework;
 using Shouldly;
-using Unity.Coding.Utils;
+using Unity.Utils;
 
 // ReSharper disable AssignNullToNotNullAttribute
 // ReSharper disable ExpressionIsAlwaysNull

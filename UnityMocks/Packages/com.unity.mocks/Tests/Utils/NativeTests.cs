@@ -3,7 +3,7 @@ using System.Collections;
 using System.Runtime.InteropServices;
 using NUnit.Framework;
 using Unity.Coding.Tests;
-using Unity.Coding.Utils;
+using Unity.Utils;
 
 namespace Utils
 {

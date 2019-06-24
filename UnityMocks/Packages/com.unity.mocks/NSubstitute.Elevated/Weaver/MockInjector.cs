@@ -7,7 +7,7 @@ using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
 using NSubstitute.Elevated.WeaverInternals;
-using Unity.Core;
+using Unity.Utils;
 using Assembly = System.Reflection.Assembly;
 using AssemblyMetadataAttribute = System.Reflection.AssemblyMetadataAttribute;
 

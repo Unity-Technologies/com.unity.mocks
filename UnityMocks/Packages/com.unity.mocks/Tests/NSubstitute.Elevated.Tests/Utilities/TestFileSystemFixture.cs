@@ -1,6 +1,6 @@
 ﻿using System;
-using NiceIO;
 using NUnit.Framework;
+using Unity.Utils;
 
 namespace NSubstitute.Elevated.Tests.Utilities
 {

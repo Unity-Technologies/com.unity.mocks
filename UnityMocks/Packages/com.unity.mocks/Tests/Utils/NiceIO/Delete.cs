@@ -2,7 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using NUnit.Framework;
-using Unity.Coding.Utils;
+using Unity.Utils;
 
 namespace NiceIO.Tests
 {

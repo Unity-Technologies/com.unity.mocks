@@ -4,7 +4,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using Enumerable = System.Linq.Enumerable;
 
-namespace Unity.Coding.Utils
+namespace Unity.Utils
 {
     public static class EnumerableExtensions
     {

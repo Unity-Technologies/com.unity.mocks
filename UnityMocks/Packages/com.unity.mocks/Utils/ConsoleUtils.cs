@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Unity.Coding.Utils
+namespace Unity.Utils
 {
     public static class Stdin
     {

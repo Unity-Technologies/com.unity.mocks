@@ -1,0 +1,15 @@
+{
+  "name": "nuget.nsubstitute",
+  "displayName": "NSubstitute",
+  "version": "3.1.0",
+  "unity": "2019.1",
+  "description": "NSubstitute is a friendly substitute for .NET mocking frameworks. It has a simple, succinct syntax to help developers write clearer tests. NSubstitute is designed for Arrange-Act-Assert (AAA) testing and with Test Driven Development (TDD) in mind.",
+  "keywords": [
+    "mocking",
+    "mocks",
+    "testing",
+    "unit-testing",
+    "TDD",
+    "AAA"
+  ]
+}

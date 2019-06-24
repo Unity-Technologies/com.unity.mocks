@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="../../../source/common.targets" />
-  <PropertyGroup>
-    <TargetFrameworks>$(Unity_CoreTargetFrameworks)</TargetFrameworks>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DependentAssembly\DependentAssembly.csproj" />
-  </ItemGroup>
-</Project>
