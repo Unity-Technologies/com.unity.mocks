@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../../source/common.targets" />
+  <PropertyGroup>
+    <TargetFrameworks>$(Unity_CoreTargetFrameworks)</TargetFrameworks>
+  </PropertyGroup>
+</Project>
