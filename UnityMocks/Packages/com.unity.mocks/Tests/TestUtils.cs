@@ -51,7 +51,7 @@ namespace Unity.Coding.Tests
             BaseDir = TestDirectory.ToNPath().Combine("testfs");
 
             // assume that we are running in the Unity Editor, where the working directory is always the project root
-            PackageDir = "Packages/com.unity.blah".ToNPath();
+            PackageDir = "Packages/com.unity.mocks".ToNPath();
 
             #if UNITY_EDITOR
 
