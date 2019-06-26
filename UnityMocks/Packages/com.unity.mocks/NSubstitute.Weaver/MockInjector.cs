@@ -13,10 +13,8 @@ using AssemblyMetadataAttribute = System.Reflection.AssemblyMetadataAttribute;
 
 namespace NSubstitute.Weaver
 {
-    class MockInjector : IDisposable // TODO: see if i can get rid of IDisposable - may not be necessary
+    class MockInjector
     {
-        AssemblyDefinition m_MockTypesAssembly;
-
         readonly string k_MarkAsPatchedKey, k_MarkAsPatchedValue;
         readonly TypeDefinition k_MockPlaceholderType;
         readonly MethodDefinition k_PatchedAssemblyBridgeTryMock;
@@ -26,10 +24,6 @@ namespace NSubstitute.Weaver
             var mockTypesPath = assembliesDir
                 .DirectoryMustExist()
                 .Combine(typeof(MockPlaceholderType).Assembly.Location.ToNPath().FileName);
-            
-            m_MockTypesAssembly = AssemblyDefinition.ReadAssembly(mockTypesPath);
-
-            k_MarkAsPatchedKey = m_MockTypesAssembly.Name.FullName;
 
             var assemblyBits = File.ReadAllBytes(mockTypesPath);
             using (var md5 = MD5.Create())
@@ -38,17 +32,20 @@ namespace NSubstitute.Weaver
                 k_MarkAsPatchedValue = hash.ToHexString();
             }
 
-            k_MockPlaceholderType = m_MockTypesAssembly.MainModule
-                .GetType(typeof(MockPlaceholderType).FullName);
+            using (var mockTypesAssembly = AssemblyDefinition.ReadAssembly(mockTypesPath))
+            {
+                k_MarkAsPatchedKey = mockTypesAssembly.Name.FullName;
 
-            k_PatchedAssemblyBridgeTryMock = m_MockTypesAssembly.MainModule
-                .GetType(typeof(PatchedAssemblyBridge).FullName)
-                .Methods
-                .Single(m => m.Name == nameof(PatchedAssemblyBridge.TryMock));
+                k_MockPlaceholderType = mockTypesAssembly.MainModule
+                    .GetType(typeof(MockPlaceholderType).FullName);
+
+                k_PatchedAssemblyBridgeTryMock = mockTypesAssembly.MainModule
+                    .GetType(typeof(PatchedAssemblyBridge).FullName)
+                    .Methods
+                    .Single(m => m.Name == nameof(PatchedAssemblyBridge.TryMock));
+            }
         }
 
-        public void Dispose() => m_MockTypesAssembly.Dispose();
-        
         public void Patch(AssemblyDefinition assembly)
         {
             // patch all types
@@ -59,7 +56,36 @@ namespace NSubstitute.Weaver
                 .ToList();                                  // copy to a list in case patch work we do would invalidate the enumerator
 
             foreach (var type in typesToProcess)
-                Patch(type, assembly);
+                Patch(type);
+
+            // add an attr to mark the assembly as patched
+
+            var mainModule = assembly.MainModule;
+            var types = mainModule.TypeSystem;
+
+            var metadataAttrName = typeof(AssemblyMetadataAttribute);
+            var metadataAttrType = new TypeReference(metadataAttrName.Namespace, metadataAttrName.Name, mainModule, types.CoreLibrary);
+            var metadataAttrCtor = new MethodReference(".ctor", types.Void, metadataAttrType) { HasThis = true };
+            metadataAttrCtor.Parameters.Add(new ParameterDefinition(types.String));
+            metadataAttrCtor.Parameters.Add(new ParameterDefinition(types.String));
+
+            var metadataAttr = new CustomAttribute(metadataAttrCtor);
+            metadataAttr.ConstructorArguments.Add(new CustomAttributeArgument(types.String, k_MarkAsPatchedKey));
+            metadataAttr.ConstructorArguments.Add(new CustomAttributeArgument(types.String, k_MarkAsPatchedValue));
+
+            assembly.CustomAttributes.Add(metadataAttr);
+        }
+
+        public void Patch(IEnumerable<MethodDefinition> methodsToPatch)
+        {
+            foreach (var group in methodsToPatch.GroupBy(m => m.Module.Assembly))
+                Patch(group.Key, group);
+        }
+        
+        void Patch(AssemblyDefinition assembly, IEnumerable<MethodDefinition> methods)
+        {
+            foreach (var method in methods)
+                Patch(method);
 
             // add an attr to mark the assembly as patched
 
@@ -94,7 +120,7 @@ namespace NSubstitute.Weaver
                 return IsPatched(assembly);
         }
 
-        void Patch(TypeDefinition type, AssemblyDefinition assembly)
+        void Patch(TypeDefinition type)
         {
             if (type.IsInterface)
                 return;
@@ -112,7 +138,7 @@ namespace NSubstitute.Weaver
             try
             {
                 foreach (var method in type.Methods)
-                    Patch(method, assembly);
+                    Patch(method);
 
                 void AddField(string fieldName, FieldAttributes fieldAttributes)
                 {
@@ -182,18 +208,20 @@ namespace NSubstitute.Weaver
             type.Methods.Add(ctor);
         }
 
-        void Patch(MethodDefinition method, AssemblyDefinition assembly)
+        void Patch(MethodDefinition method)
         {
             if (method.IsCompilerControlled || method.IsConstructor || method.IsAbstract || !method.HasBody)
                 return;
 
+            var module = method.Module;
+            
             method.Body.InitLocals = true;
-            var originalType = assembly.MainModule.ImportReference(Type.GetType("System.Type"));
-            var getTypeFromHandle = assembly.MainModule.ImportReference(originalType.Resolve().Methods.Single(m => m.Name == "GetTypeFromHandle"));
-            //var getTypeFromHandle = assembly.MainModule.Import(new MethodReference("GetTypeFromHandle", type, type) { Parameters = { new ParameterDefinition(runtimeTypeHandle) } });
-            var emptyTypes = assembly.MainModule.ImportReference(originalType.Resolve().Fields.Single(f => f.Name == "EmptyTypes"));
+            var originalType = module.ImportReference(Type.GetType("System.Type"));
+            var getTypeFromHandle = module.ImportReference(originalType.Resolve().Methods.Single(m => m.Name == "GetTypeFromHandle"));
+            //var getTypeFromHandle = module.Import(new MethodReference("GetTypeFromHandle", type, type) { Parameters = { new ParameterDefinition(runtimeTypeHandle) } });
+            var emptyTypes = module.ImportReference(originalType.Resolve().Fields.Single(f => f.Name == "EmptyTypes"));
 
-            var v1 = new VariableDefinition(assembly.MainModule.TypeSystem.Object);
+            var v1 = new VariableDefinition(module.TypeSystem.Object);
             method.Body.Variables.Add(v1);
             var bodyInstructions = new List<Instruction>(method.Body.Instructions);
             method.Body.Instructions.Clear();
@@ -209,7 +237,7 @@ namespace NSubstitute.Weaver
             if (method.Parameters.Count > 0)
             {
                 method.Body.Instructions.Add(Instruction.Create(OpCodes.Ldc_I4_1));
-                method.Body.Instructions.Add(Instruction.Create(OpCodes.Newarr, assembly.MainModule.TypeSystem.Object));
+                method.Body.Instructions.Add(Instruction.Create(OpCodes.Newarr, module.TypeSystem.Object));
                 method.Body.Instructions.Add(Instruction.Create(OpCodes.Dup));
                 method.Body.Instructions.Add(Instruction.Create(OpCodes.Ldc_I4_0));
                 method.Body.Instructions.Add(Instruction.Create(OpCodes.Ldarg_1)); // arg
@@ -219,16 +247,16 @@ namespace NSubstitute.Weaver
             else
             {
                 method.Body.Instructions.Add(Instruction.Create(OpCodes.Ldc_I4_0));
-                method.Body.Instructions.Add(Instruction.Create(OpCodes.Newarr, assembly.MainModule.TypeSystem.Object));
+                method.Body.Instructions.Add(Instruction.Create(OpCodes.Newarr, module.TypeSystem.Object));
             }
 
             // End of parameter include
-            method.Body.Instructions.Add(Instruction.Create(OpCodes.Call, assembly.MainModule.ImportReference(k_PatchedAssemblyBridgeTryMock)));
+            method.Body.Instructions.Add(Instruction.Create(OpCodes.Call, module.ImportReference(k_PatchedAssemblyBridgeTryMock)));
             method.Body.Instructions.Add(Instruction.Create(OpCodes.Nop));
 
             var count = method.Body.Instructions.Count;
 
-            var hasReturnValue = method.ReturnType != assembly.MainModule.TypeSystem.Void;
+            var hasReturnValue = method.ReturnType != module.TypeSystem.Void;
             if (hasReturnValue)
             {
                 method.Body.Instructions.Add(Instruction.Create(OpCodes.Ldloc_S, v1));

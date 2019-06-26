@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Mono.Cecil;
+using NSubstitute.Weaver;
 using NUnit.Framework;
+using Unity.Utils;
 
 namespace NSubstitute.Elevated.Tests
 {
@@ -65,12 +68,12 @@ namespace NSubstitute.Elevated.Tests
             var testPath = Compile("Test", k_TestCode,
                     systemUnderTestPath.FileNameWithoutExtension,
                     "NSubstitute", "NSubstitute.Elevated", "NUnit.Framework", "System.Runtime",
-                    "System.Threading.Tasks.Extensions", "netstandard");
+                    "System.Threading.Tasks.Extensions", "Castle.Core", "netstandard", "mscorlib");
 
             // use testAssembly to scan for uses of Substitute.For and retrieve System.DateTime.Now and Class.Add 
             
             using (var systemUnderTest = AssemblyDefinition.ReadAssembly(systemUnderTestPath))
-            using (var mscorlib = systemUnderTest.MainModule.AssemblyResolver.Resolve(systemUnderTest.MainModule.AssemblyReferences.SingleOrDefault(c => c.Name == "mscorlib")))
+            using (var mscorlib = AssemblyDefinition.ReadAssembly(BaseDir.Combine("mscorlib.dll")))
             {
                 // list of all stuff we detect an NSub extension called on it
                 var mockedMethodDefinitions = new[]
@@ -80,18 +83,34 @@ namespace NSubstitute.Elevated.Tests
                 };
 
                 Patch(mockedMethodDefinitions);
+
+                Write(systemUnderTest, systemUnderTestPath);
+                Write(mscorlib, BaseDir.Combine("mscorlib.dll"));
             }
         }
 
         void Patch(IEnumerable<MethodDefinition> methodsToPatch)
         {
-            foreach (var methodToPatch in methodsToPatch)
-                Patch(methodToPatch);
+            MockInjector.Patch(methodsToPatch);
         }
 
-        void Patch(MethodDefinition methodToPatch)
+        void Write(AssemblyDefinition assemblyToPatch, NPath assemblyToPatchPath, PatchOptions patchOptions = default)
         {
-                        
+            // atomic write of file with backup
+            // TODO: skip backup if existing file already patched. want the .orig to only be the unpatched file.
+
+            // write to tmp and release the lock
+            var tmpPath = assemblyToPatchPath.ChangeExtension(".tmp");
+            tmpPath.DeleteIfExists();
+            assemblyToPatch.Write(tmpPath); // $$$ , new WriterParameters { WriteSymbols = true }); see https://github.com/jbevain/cecil/issues/421
+            assemblyToPatch.Dispose();
+
+            if ((patchOptions & PatchOptions.SkipPeVerify) == 0)
+                PeVerify.Verify(tmpPath);
+
+            // move the actual file to backup, and move the tmp to actual
+            var backupPath = ElevatedWeaver.GetPatchBackupPathFor(assemblyToPatchPath);
+            File.Replace(tmpPath, assemblyToPatchPath, backupPath);
         }
     }
 }
