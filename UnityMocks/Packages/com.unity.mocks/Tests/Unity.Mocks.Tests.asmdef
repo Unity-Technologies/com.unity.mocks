@@ -4,11 +4,11 @@
         "Unity.Mocks.Utils",
         "NSubstitute.Elevated",
         "NSubstitute.Weaver",
-        "Support.SystemUnderTest"
+        "Support.SystemUnderTest",
+        "UnityEngine.TestRunner",
+        "NSubstitute.Weaver"
     ],
-    "optionalUnityReferences": [
-        "TestAssemblies"
-    ],
+
     "includePlatforms": [
         "Editor"
     ],
