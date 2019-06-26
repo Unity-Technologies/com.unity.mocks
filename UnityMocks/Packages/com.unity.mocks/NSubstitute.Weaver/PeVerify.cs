@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Utils;
 
 namespace NSubstitute.Weaver
@@ -23,6 +24,10 @@ namespace NSubstitute.Weaver
 
         public static void Verify(string assemblyName)
         {
+            // TODO: find a better way to avoid assemblies that don't peverify out of the box
+            if (new[] { "mscorlib", "System.Runtime", "netstandard" }.Contains(new NPath(assemblyName).FileNameWithoutExtension))
+                return;
+            
             var log = new List<string>();
             var rc = ProcessUtility.ExecuteCommandLine(ExePath, new[] { "/nologo", assemblyName }, null, log, log);
 
