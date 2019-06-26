@@ -33,15 +33,17 @@ namespace Unity.Mocks.Build
 
         private static IEnumerable<TypeDefinition> GetAllMockedStaticTypes(string location)
         {
-            var assembly = AssemblyDefinition.ReadAssembly(location);
-            var allTestMethods = GetAllTestMethods(assembly);
-            foreach (var m in allTestMethods)
+            using (var assembly = AssemblyDefinition.ReadAssembly(location))
             {
-                var mockingCalls = GetStaticMockCalls(m);
-                foreach (var mc in mockingCalls)
+                var allTestMethods = GetAllTestMethods(assembly);
+                foreach (var m in allTestMethods)
                 {
-                    var pt = ((GenericInstanceMethod)mc).GenericArguments[0];
-                    yield return pt.Resolve();
+                    var mockingCalls = GetStaticMockCalls(m);
+                    foreach (var mc in mockingCalls)
+                    {
+                        var pt = ((GenericInstanceMethod)mc).GenericArguments[0];
+                        yield return pt.Resolve();
+                    }
                 }
             }
         }
