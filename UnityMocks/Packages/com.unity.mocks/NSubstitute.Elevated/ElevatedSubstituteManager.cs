@@ -69,6 +69,7 @@ namespace NSubstitute.Elevated
                 switch (substituteConfig)
                 {
                     // TODO: i misunderstood "override all" and "call base", so fix these
+                    // need to store the yes/no flag with the router in the value of the dict and use that when routing for return to TryMock
                     
                     case SubstituteConfig.OverrideAllCalls:
 
@@ -77,12 +78,14 @@ namespace NSubstitute.Elevated
                             throw new SubstituteException("Do not pass ctor args when substituting with elevated mocks (or did you mean to use ForPartsOf?)");
 
                         // but we use a ctor arg to select the special empty ctor that we patched in
-                        constructorArguments = k_MockedCtorParams;
+                        //$$$ TODO constructorArguments = k_MockedCtorParams;
                         break;
+                    
                     case SubstituteConfig.CallBaseByDefault:
                         // TODO: this is just wrong
                         var castleDynamicProxyFactory = new CastleDynamicProxyFactory();
                         return castleDynamicProxyFactory.GenerateProxy(callRouter, typeToProxy, additionalInterfaces, constructorArguments);
+                    
                     default:
                         throw new ArgumentOutOfRangeException();
                 }

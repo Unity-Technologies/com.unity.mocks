@@ -4,16 +4,15 @@
         "Minimal.Systems",
         "NSubstitute.Elevated"
     ],
-    "optionalUnityReferences": [
-        "TestAssemblies"
-    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
-        "NSubstitute.dll"
-    ],
+        "nunit.framework.dll",
+        "NSubstitute.dll",
+        "System.Threading.Tasks.Extensions.dll"
+     ],
     "autoReferenced": false,
     "defineConstraints": [],
     "versionDefines": []

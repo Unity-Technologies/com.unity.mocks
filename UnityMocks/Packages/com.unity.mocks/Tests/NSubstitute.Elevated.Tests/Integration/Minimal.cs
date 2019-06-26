@@ -15,16 +15,20 @@ namespace NSubstitute.Elevated.Tests
         [Test]
         public void BasicTest()
         {
-            // use testAssembly to scan for uses of Substitute.For and retrieve System.DateTime.Now and Class.Add 
+            var assemblyPath = Assembly.GetExecutingAssembly().Location.ToNPath().Parent;
+            var systemUnderTestPath = assemblyPath.Combine("Minimal.Systems.dll"); 
+            var testPath = assemblyPath.Combine("Minimal.Tests.dll"); 
+
+            // TODO: use testAssembly to scan for uses of Substitute.For and retrieve System.DateTime.Now and Class.Add 
             
             using (var systemUnderTest = AssemblyDefinition.ReadAssembly(systemUnderTestPath))
-            using (var mscorlib = AssemblyDefinition.ReadAssembly(BaseDir.Combine("mscorlib.dll")))
+            using (var mscorlib = AssemblyDefinition.ReadAssembly(typeof(object).Assembly.Location))
             {
                 // list of all stuff we detect an NSub extension called on it
                 var mockedMethodDefinitions = new[]
                 {
                     mscorlib.MainModule.GetType("System.DateTime").Properties.Single(p => p.Name == "Now").GetMethod,
-                    systemUnderTest.MainModule.GetType("Class").Methods.Single(m => m.Name == "Add"),
+                    systemUnderTest.MainModule.GetType("Inner").Methods.Single(m => m.Name == "Add"),
                 };
 
                 Patch(mockedMethodDefinitions);
@@ -60,6 +64,9 @@ namespace NSubstitute.Elevated.Tests
             assemblyToPatch.Write(tmpPath); // $$$ , new WriterParameters { WriteSymbols = true }); see https://github.com/jbevain/cecil/issues/421
             assemblyToPatch.Dispose();
 
+            // TODO: peverify obviously won't work with memory written streams. also needs all the dependencies.
+            // solution is to create a temp folder, write the patched dll there as well as any of its direct dependencies, and run peverify
+            
             if ((patchOptions & PatchOptions.SkipPeVerify) == 0)
                 PeVerify.Verify(tmpPath);
 

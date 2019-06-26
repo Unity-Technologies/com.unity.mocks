@@ -5,10 +5,8 @@
         "NSubstitute.Elevated",
         "NSubstitute.Weaver",
         "Support.SystemUnderTest",
-        "UnityEngine.TestRunner",
-        "NSubstitute.Weaver"
+        "UnityEngine.TestRunner"
     ],
-
     "includePlatforms": [
         "Editor"
     ],
