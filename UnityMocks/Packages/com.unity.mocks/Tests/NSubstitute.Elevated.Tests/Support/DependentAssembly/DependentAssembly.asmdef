@@ -1,5 +1,5 @@
 {
-    "name": "DependentAssembly",
+    "name": "Support.DependentAssembly",
     "references": [
     ],
     "optionalUnityReferences": [

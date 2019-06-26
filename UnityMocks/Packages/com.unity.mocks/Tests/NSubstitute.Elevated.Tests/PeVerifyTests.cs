@@ -1,8 +1,8 @@
 ﻿using System.IO;
-using NSubstitute.Elevated.Tests.Utilities;
-using NSubstitute.Elevated.Weaver;
+using NSubstitute.Weaver;
 using NUnit.Framework;
 using Shouldly;
+using Unity.Mocks.Tests;
 
 namespace NSubstitute.Elevated.Tests
 {

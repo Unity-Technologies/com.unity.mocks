@@ -67,7 +67,7 @@ namespace Unity.Utils
             => BitConverter.ToString(@this).Replace("-", "");
     }
 
-    public static class ListExtensions
+    public static partial class ListExtensions
     {
         public static void SetRange<T>([NotNull] this List<T> @this, IEnumerable<T> collection)
         {
