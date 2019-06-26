@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Runtime.InteropServices;
 using NUnit.Framework;
-using Unity.Coding.Tests;
+using Unity.Mocks.Tests;
 using Unity.Utils;
 
 namespace Utils

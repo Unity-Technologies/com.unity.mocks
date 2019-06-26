@@ -2,24 +2,33 @@ using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using JetBrains.Annotations;
 using NSubstitute.Core;
 using Unity.Utils;
 
 // this namespace contains types that must be public in order to be usable from patched assemblies, yet
 // we do not want used from normal client api
-namespace NSubstitute.Elevated.WeaverInternals
+namespace NSubstitute.Elevated.Internals
 {
+    public static class MockConstants
+    {
+        public const string
+            InjectedMockStaticDataName = "__mock__staticData",
+            InjectedMockDataName = "__mock__data";
+    }
+
     // used when generating mocked default ctors
     public class MockPlaceholderType {}
 
     // important: keep all non-mscorlib types out of the public surface area of this class, so as to
     // avoid needing to add more references than NSubstitute.Elevated to the assembly during patching.
 
+    [UsedImplicitly]
     public static class PatchedAssemblyBridge
     {
         // returns true if a mock is in place and it is taking over functionality. instance may be null
         // if static. mockedReturnValue is ignored in a void return func.
-        [MethodImpl(MethodImplOptions.NoInlining)]
+        [MethodImpl(MethodImplOptions.NoInlining), UsedImplicitly]
         public static bool TryMock(Type actualType, object instance, Type mockedReturnType, out object mockedReturnValue, Type[] methodGenericTypes, object[] args)
         {
             if (!(SubstitutionContext.Current is ElevatedSubstitutionContext elevated))
@@ -37,3 +46,4 @@ namespace NSubstitute.Elevated.WeaverInternals
         }
     }
 }
+

@@ -2,15 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Mono.Cecil;
 using NSubstitute.Core;
-using NSubstitute.Elevated.WeaverInternals;
+using NSubstitute.Elevated.Internals;
 using NSubstitute.Exceptions;
 using NSubstitute.Proxies;
 using NSubstitute.Proxies.CastleDynamicProxy;
 using NSubstitute.Proxies.DelegateProxy;
 using Unity.Utils;
-using TypeAttributes = Mono.Cecil.TypeAttributes;
 
 namespace NSubstitute.Elevated
 {
@@ -23,15 +21,6 @@ namespace NSubstitute.Elevated
         public ElevatedSubstituteManager(ISubstitutionContext substitutionContext)
         {
             m_CallFactory = new CallFactory(substitutionContext);
-        }
-
-        void AddMockPlaceholderToAssembly(AssemblyDefinition targetAssembly)
-        {
-            var mockPlaceholder = new TypeDefinition("NSubstitute.Elevated.WeaverInternals", "MockPlaceholderType", TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.AnsiClass | TypeAttributes.BeforeFieldInit)
-            {
-                BaseType = targetAssembly.MainModule.TypeSystem.Object
-            };
-            targetAssembly.MainModule.Types.Add(mockPlaceholder);
         }
 
         object IProxyFactory.GenerateProxy(ICallRouter callRouter, Type typeToProxy, Type[] additionalInterfaces, object[] constructorArguments)
@@ -69,7 +58,8 @@ namespace NSubstitute.Elevated
                 if (additionalInterfaces.Any())
                     throw new SubstituteException("Cannot add interfaces at runtime to patched types");
 
-                switch (substituteConfig) {
+                switch (substituteConfig)
+                {
                     case SubstituteConfig.OverrideAllCalls:
 
                         // overriding all calls includes the ctor, so it makes no sense for the user to pass in ctor args
@@ -82,8 +72,6 @@ namespace NSubstitute.Elevated
                     case SubstituteConfig.CallBaseByDefault:
                         var castleDynamicProxyFactory = new CastleDynamicProxyFactory();
                         return castleDynamicProxyFactory.GenerateProxy(callRouter, typeToProxy, additionalInterfaces, constructorArguments);
-                    case null:
-                        break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -146,8 +134,8 @@ namespace NSubstitute.Elevated
         //   2. support for struct instances (only possible to associate call routers with individual structs from the inside)
         //   3. is a simple way to check that a type has been patched
         //
-        FieldInfo GetStaticRouterField(Type type) => m_RouterStaticFieldCache.GetOrAdd(type, t => GetRouterField(t, Weaver.MockInjector.InjectedMockStaticDataName, BindingFlags.Static));
-        FieldInfo GetRouterField(Type type) => m_RouterFieldCache.GetOrAdd(type, t => GetRouterField(t, Weaver.MockInjector.InjectedMockDataName, BindingFlags.Instance));
+        FieldInfo GetStaticRouterField(Type type) => m_RouterStaticFieldCache.GetOrAdd(type, t => GetRouterField(t, MockConstants.InjectedMockStaticDataName, BindingFlags.Static));
+        FieldInfo GetRouterField(Type type) => m_RouterFieldCache.GetOrAdd(type, t => GetRouterField(t, MockConstants.InjectedMockDataName, BindingFlags.Instance));
 
         static FieldInfo GetRouterField(IReflect type, string fieldName, BindingFlags bindingFlags)
         {

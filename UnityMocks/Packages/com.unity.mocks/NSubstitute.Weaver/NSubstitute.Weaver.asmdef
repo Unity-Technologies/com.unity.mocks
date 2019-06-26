@@ -1,14 +1,10 @@
 {
-    "name": "Unity.Mocks.Tests",
-    "references": [
-        "Unity.Mocks.Utils",
+    "name": "NSubstitute.Weaver",
+    "references":[
         "NSubstitute.Elevated",
-        "NSubstitute.Weaver",
-        "Support.SystemUnderTest"
+        "Unity.Mocks.Utils"
     ],
-    "optionalUnityReferences": [
-        "TestAssemblies"
-    ],
+    "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"
     ],
@@ -16,13 +12,12 @@
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
-        "Shouldly.dll",
         "Mono.Cecil.dll",
         "Mono.Cecil.Rocks.dll",
         "NSubstitute.dll",
         "System.Threading.Tasks.Extensions.dll"
     ],
-    "autoReferenced": true,
+    "autoReferenced": false,
     "defineConstraints": [],
     "versionDefines": []
 }

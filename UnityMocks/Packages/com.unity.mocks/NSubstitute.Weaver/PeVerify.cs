@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Utils;
 
-namespace NSubstitute.Elevated.Weaver
+namespace NSubstitute.Weaver
 {
     public class PeVerifyException : Exception
     {

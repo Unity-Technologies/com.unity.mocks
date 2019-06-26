@@ -1,7 +1,9 @@
 using System;
+using JetBrains.Annotations;
 
-namespace NSubstitute.Elevated
+namespace NSubstitute
 {
+    [PublicAPI]
     public static class SubstituteStatic
     {
         // callers need an actual object in order to chain further arranging, so we return this placeholder for static substitutes

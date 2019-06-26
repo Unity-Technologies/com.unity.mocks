@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using NUnit.Framework;
 using Shouldly;
-using Unity.Coding.Tests;
+using Unity.Mocks.Tests;
 using Unity.Utils;
 
 namespace Utils

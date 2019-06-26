@@ -4,7 +4,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using Mono.Cecil;
 
-namespace NSubstitute.Elevated.Weaver
+namespace NSubstitute.Weaver
 {
     public enum IncludeNested { No, Yes }
 

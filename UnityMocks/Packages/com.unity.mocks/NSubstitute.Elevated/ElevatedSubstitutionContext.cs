@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using JetBrains.Annotations;
 using NSubstitute.Core;
 using NSubstitute.Core.Arguments;
-using NSubstitute.Elevated.Weaver;
 using NSubstitute.Exceptions;
 using NSubstitute.Routing;
 using Unity.Utils;
@@ -30,16 +28,11 @@ namespace NSubstitute.Elevated
                     new ElevatedCallRouterFactory(), ElevatedSubstituteManager, new CallRouterResolver());
         }
 
-        public static IDisposable AutoHook(string assemblyLocation)
+        public static IDisposable AutoHook()
         {
             var hookedContext = SubstitutionContext.Current;
             var thisContext = new ElevatedSubstitutionContext(hookedContext);
             SubstitutionContext.Current = thisContext;
-
-            // TODO: return a new IDisposable class that also contains the list of patch results, then in caller verify that against expected (don't want to go too wide)
-
-            var patchAllDependentAssemblies = ElevatedWeaver.PatchAllDependentAssemblies(
-                new NPath(assemblyLocation), PatchOptions.PatchTestAssembly).ToList();
 
             return new DelegateDisposable(() =>
                 {

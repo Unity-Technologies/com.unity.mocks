@@ -7,48 +7,48 @@ using System.Security.Cryptography;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
-using NSubstitute.Elevated.WeaverInternals;
+using NSubstitute.Elevated.Internals;
 using Unity.Utils;
-using Assembly = System.Reflection.Assembly;
 using AssemblyMetadataAttribute = System.Reflection.AssemblyMetadataAttribute;
 
-namespace NSubstitute.Elevated.Weaver
+namespace NSubstitute.Weaver
 {
-    class MockInjector
+    class MockInjector : IDisposable // TODO: see if i can get rid of IDisposable - may not be necessary
     {
-        static readonly string k_MarkAsPatchedKey, k_MarkAsPatchedValue;
+        AssemblyDefinition m_MockTypesAssembly;
 
-        readonly TypeDefinition m_MockPlaceholderType;
-        readonly MethodDefinition m_PatchedAssemblyBridgeTryMock;
+        readonly string k_MarkAsPatchedKey, k_MarkAsPatchedValue;
+        readonly TypeDefinition k_MockPlaceholderType;
+        readonly MethodDefinition k_PatchedAssemblyBridgeTryMock;
 
-        public static Assembly MockTypesAssembly { get; } = Assembly.GetExecutingAssembly();
-        public const string InjectedMockStaticDataName = "__mock__staticData", InjectedMockDataName = "__mock__data";
-
-        static MockInjector()
+        public MockInjector(NPath assembliesDir)
         {
-            k_MarkAsPatchedKey = MockTypesAssembly.GetName().Name;
+            var mockTypesPath = assembliesDir
+                .DirectoryMustExist()
+                .Combine(typeof(MockPlaceholderType).Assembly.Location.ToNPath().FileName);
+            
+            m_MockTypesAssembly = AssemblyDefinition.ReadAssembly(mockTypesPath);
 
-            var assemblyBits = File.ReadAllBytes(MockTypesAssembly.Location);
+            k_MarkAsPatchedKey = m_MockTypesAssembly.Name.FullName;
+
+            var assemblyBits = File.ReadAllBytes(mockTypesPath);
             using (var md5 = MD5.Create())
             {
                 var hash = md5.ComputeHash(assemblyBits);
                 k_MarkAsPatchedValue = hash.ToHexString();
             }
+
+            k_MockPlaceholderType = m_MockTypesAssembly.MainModule
+                .GetType(typeof(MockPlaceholderType).FullName);
+
+            k_PatchedAssemblyBridgeTryMock = m_MockTypesAssembly.MainModule
+                .GetType(typeof(PatchedAssemblyBridge).FullName)
+                .Methods
+                .Single(m => m.Name == nameof(PatchedAssemblyBridge.TryMock));
         }
 
-        public MockInjector()
-        {
-            using (var mockTypesDefinition = AssemblyDefinition.ReadAssembly(MockTypesAssembly.Location))
-            {
-                m_MockPlaceholderType = mockTypesDefinition.MainModule
-                    .GetType(typeof(MockPlaceholderType).FullName);
-
-                m_PatchedAssemblyBridgeTryMock = mockTypesDefinition.MainModule
-                    .GetType(typeof(PatchedAssemblyBridge).FullName)
-                    .Methods.Single(m => m.Name == nameof(PatchedAssemblyBridge.TryMock));
-            }
-        }
-
+        public void Dispose() => m_MockTypesAssembly.Dispose();
+        
         public void Patch(AssemblyDefinition assembly)
         {
             // patch all types
@@ -79,7 +79,7 @@ namespace NSubstitute.Elevated.Weaver
             assembly.CustomAttributes.Add(metadataAttr);
         }
 
-        public static bool IsPatched(AssemblyDefinition assembly)
+        public bool IsPatched(AssemblyDefinition assembly)
         {
             return assembly.CustomAttributes.Any(a =>
                 a.AttributeType.FullName == typeof(AssemblyMetadataAttribute).FullName &&
@@ -88,7 +88,7 @@ namespace NSubstitute.Elevated.Weaver
                 a.ConstructorArguments[1].Value as string == k_MarkAsPatchedValue);
         }
 
-        public static bool IsPatched(string assemblyPath)
+        public bool IsPatched(string assemblyPath)
         {
             using (var assembly = AssemblyDefinition.ReadAssembly(assemblyPath))
                 return IsPatched(assembly);
@@ -121,8 +121,8 @@ namespace NSubstitute.Elevated.Weaver
                             type.Module.TypeSystem.Object));
                 }
 
-                AddField(InjectedMockStaticDataName, FieldAttributes.Static);
-                AddField(InjectedMockDataName, 0);
+                AddField(MockConstants.InjectedMockStaticDataName, FieldAttributes.Static);
+                AddField(MockConstants.InjectedMockDataName, 0);
 
                 AddMockCtor(type);
             }
@@ -134,8 +134,8 @@ namespace NSubstitute.Elevated.Weaver
 
         public static bool IsPatched(TypeDefinition type)
         {
-            var mockStaticField = type.Fields.SingleOrDefault(f => f.Name == InjectedMockStaticDataName);
-            var mockField = type.Fields.SingleOrDefault(f => f.Name == InjectedMockDataName);
+            var mockStaticField = type.Fields.SingleOrDefault(f => f.Name == MockConstants.InjectedMockStaticDataName);
+            var mockField = type.Fields.SingleOrDefault(f => f.Name == MockConstants.InjectedMockDataName);
             if ((mockStaticField != null) != (mockField != null))
                 throw new Exception("Unexpected mismatch between static and instance mock injected fields");
 
@@ -152,7 +152,7 @@ namespace NSubstitute.Elevated.Weaver
                 DeclaringType = type,
                 HasThis = true,
             };
-            ctor.Parameters.Add(new ParameterDefinition(type.Module.ImportReference(m_MockPlaceholderType)));
+            ctor.Parameters.Add(new ParameterDefinition(type.Module.ImportReference(k_MockPlaceholderType)));
 
             var il = ctor.Body.GetILProcessor();
 
@@ -223,7 +223,7 @@ namespace NSubstitute.Elevated.Weaver
             }
 
             // End of parameter include
-            method.Body.Instructions.Add(Instruction.Create(OpCodes.Call, assembly.MainModule.ImportReference(m_PatchedAssemblyBridgeTryMock)));
+            method.Body.Instructions.Add(Instruction.Create(OpCodes.Call, assembly.MainModule.ImportReference(k_PatchedAssemblyBridgeTryMock)));
             method.Body.Instructions.Add(Instruction.Create(OpCodes.Nop));
 
             var count = method.Body.Instructions.Count;
