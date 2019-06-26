@@ -3,18 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
 using Mono.Cecil;
-using NSubstitute.Elevated;
 using Unity.Mocks.Build;
 using UnityEditor;
 using UnityEngine;
 using UnityEditor.TestTools;
-using UnityEngine.TestTools;
 using OpCodes = Mono.Cecil.Cil.OpCodes;
 
 [assembly: TestPlayerBuildModifier(typeof(Il2CppPrepare))]
-[assembly: PostBuildCleanup(typeof(Il2CppPrepare))]
 
 namespace Unity.Mocks.Build
 {
@@ -35,9 +31,9 @@ namespace Unity.Mocks.Build
             return playerOptions;
         }
 
-        private static IEnumerable<TypeDefinition> GetAllMockedStaticTypes(string localtion)
+        private static IEnumerable<TypeDefinition> GetAllMockedStaticTypes(string location)
         {
-            var assembly = AssemblyDefinition.ReadAssembly(localtion);
+            var assembly = AssemblyDefinition.ReadAssembly(location);
             var allTestMethods = GetAllTestMethods(assembly);
             foreach (var m in allTestMethods)
             {
@@ -54,7 +50,7 @@ namespace Unity.Mocks.Build
             return method.Body.Instructions
                 .Where(instruction => instruction.OpCode == OpCodes.Call)
                 .Select(instruction => (MethodReference)instruction.Operand)
-                .Where(methodReference => methodReference.FullName.Contains("NSubstitute.Elevated.Substitute::For"));
+                .Where(methodReference => methodReference.FullName.Contains("NSubstitute.SubstituteStatic::For"));
         }
 
         private static IEnumerable<MethodDefinition> GetAllTestMethods(AssemblyDefinition assembly)

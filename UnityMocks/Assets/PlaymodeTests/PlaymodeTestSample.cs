@@ -20,7 +20,7 @@ namespace Tests
         [Test]
         public void PlaymodeTestSampleSimplePasses()
         {
-            using (NSubstitute.Elevated.SubstituteStatic.For<StaticClassA>())
+            using (SubstituteStatic.For<StaticClassA>())
             {
                 StaticClassA.GetValue(4).Returns(2);
                 Assert.That(StaticClassA.GetValue(4), Is.EqualTo(2));
