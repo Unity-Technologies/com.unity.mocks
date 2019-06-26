@@ -17,10 +17,8 @@ namespace Unity.Mocks.Tests
         [OneTimeSetUp]
         public void OneTimeSetUpTestFileSystem()
         {
-            BaseDir = TestContext.CurrentContext
-                .TestDirectory.ToNPath()
-                .Combine($"testfs_{TestContext.CurrentContext.GetFixtureName()}")
-                .CreateDirectory();
+            var testBaseDir = TestContext.CurrentContext.TestDirectory.ToNPath();
+            BaseDir = testBaseDir.Combine($"testfs_{TestContext.CurrentContext.GetFixtureName()}");
 
             // TODO: detect this a better way
             var packageDir = "Packages/com.unity.mocks".ToNPath(); 

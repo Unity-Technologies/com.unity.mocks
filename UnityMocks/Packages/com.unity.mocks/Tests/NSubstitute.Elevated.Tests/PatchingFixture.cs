@@ -3,7 +3,6 @@ using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
-using NSubstitute.Elevated.Internals;
 using NSubstitute.Weaver;
 using NUnit.Framework;
 using Shouldly;
@@ -19,9 +18,8 @@ namespace NSubstitute.Elevated.Tests
         [OneTimeSetUp]
         public void OneTimeSetUpPatching()
         {
-            // injector needs this
-            var mockTypesAssembly = typeof(MockPlaceholderType).Assembly.Location.ToNPath();
-            mockTypesAssembly.Copy(BaseDir);
+            var buildFolder = new NPath(GetType().Assembly.Location).Parent;
+            buildFolder.CopyFiles(BaseDir, true, f => f.ExtensionWithDot == ".dll");
 
             MockInjector = new MockInjector(BaseDir);
         }
@@ -33,7 +31,8 @@ namespace NSubstitute.Elevated.Tests
         {
             // prefix the assembly name because they are globally unique and don't want to ever collide
             var testAssemblyPath = BaseDir
-                .Combine($"{TestContext.CurrentContext.GetFixtureName()}_{testAssemblyName}.dll");
+                .Combine($"{TestContext.CurrentContext.GetFixtureName()}_{testAssemblyName}")
+                .ChangeExtension(".dll");
 
             // set up to compile
 
@@ -44,29 +43,22 @@ namespace NSubstitute.Elevated.Tests
                 IncludeDebugInformation = true,
                 CompilerOptions = "/o- /debug+ /warn:0"
             };
+            compilerArgs.ReferencedAssemblies.Add(typeof(int).Assembly.Location); // mscorlib
 
-            var searchPaths = new[]
-            {
-                NPath.CurrentDirectory.Combine("Library/ScriptAssemblies"),
-                NPath.CurrentDirectory.Combine("Packages/nuget.nsubstitute"),
-                typeof(object).Assembly.Location.ToNPath().Parent,
-                typeof(object).Assembly.Location.ToNPath().Parent.Combine("Facades"),
-                typeof(TestAttribute).Assembly.Location.ToNPath().Parent,
-            };
+            // TODO: use typecache
+            var assemblies = AppDomain.CurrentDomain
+                .GetAssemblies()
+                .Where(a => !a.IsDynamic)
+                .ToDictionary(a => a.GetName().Name, a => a.Location.ToNPath(), StringComparer.OrdinalIgnoreCase);
             
-            foreach (var dependentAssemblyFileName in dependentAssemblyNames.Select(n => n + ".dll"))
+            foreach (var dependentAssemblyName in dependentAssemblyNames)
             {
                 // we may have already copied it in
-                var path = BaseDir.Combine(dependentAssemblyFileName);
+                var path = BaseDir.Combine(dependentAssemblyName).ChangeExtension(".dll");
                 
-                // if not, current appdomain ought to have it  
-                if (!path.Exists())
-                {
-                    var srcPath = searchPaths
-                        .Select(p => p.Combine(dependentAssemblyFileName))
-                        .First(p => p.FileExists());
-                    path = srcPath.Copy(BaseDir);
-                }
+                // if not,  
+                if (!path.Exists() && assemblies.TryGetValue(dependentAssemblyName, out path))
+                    path.Copy(BaseDir.Combine(path.FileName));
 
                 compilerArgs.ReferencedAssemblies.Add(path);
             }
