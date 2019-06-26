@@ -7,7 +7,7 @@ namespace NSubstitute
     public static class SubstituteStatic
     {
         // callers need an actual object in order to chain further arranging, so we return this placeholder for static substitutes
-        // TODO: add a finalizer that throws if static proxy was not disposed by user. add a GC.WaitForPendingFinalizers to un-hook in the sub context. add comments explaining it all.
+        // TODO: add a DisposeSentinel
         public class Proxy : IDisposable
         {
             readonly IDisposable m_Forwarder;

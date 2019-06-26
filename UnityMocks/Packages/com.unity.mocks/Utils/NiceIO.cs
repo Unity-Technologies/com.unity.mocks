@@ -26,12 +26,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 
 namespace Unity.Utils
 {
+    [DebuggerDisplay("{FileName} ({ToString()})")]
     public class NPath : IEquatable<NPath>, IComparable
     {
         private static readonly StringComparison PathStringComparison = IsLinux() ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;

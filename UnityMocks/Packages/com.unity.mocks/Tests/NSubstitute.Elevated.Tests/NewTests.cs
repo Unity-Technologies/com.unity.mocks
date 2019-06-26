@@ -38,7 +38,6 @@ namespace NSubstitute.Elevated.Tests
             const string k_TestCode = @"
                 using System;
                 using NSubstitute;
-                using NSubstitute.Elevated;
                 using NUnit.Framework;
 
                 class Fixture
@@ -64,9 +63,9 @@ namespace NSubstitute.Elevated.Tests
             
             var systemUnderTestPath = Compile("SystemUnderTest", k_SystemUnderTestCode);
             var testPath = Compile("Test", k_TestCode,
-                    "SystemUnderTest",
-                    "NSubstitute", "NSubstitute.Elevated", "NUnit.Framework",
-                    "System.Threading.Tasks.Extensions", "System.Runtime");
+                    systemUnderTestPath.FileNameWithoutExtension,
+                    "NSubstitute", "NSubstitute.Elevated", "NUnit.Framework", "System.Runtime",
+                    "System.Threading.Tasks.Extensions", "netstandard");
 
             // use testAssembly to scan for uses of Substitute.For and retrieve System.DateTime.Now and Class.Add 
             
