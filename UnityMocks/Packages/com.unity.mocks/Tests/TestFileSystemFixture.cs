@@ -17,11 +17,6 @@ namespace Unity.Mocks.Tests
         [OneTimeSetUp]
         public void OneTimeSetUpTestFileSystem()
         {
-            BaseDir = TestContext.CurrentContext
-                .TestDirectory.ToNPath()
-                .Combine($"testfs_{TestContext.CurrentContext.GetFixtureName()}")
-                .CreateDirectory();
-
             // TODO: detect this a better way
             var packageDir = "Packages/com.unity.mocks".ToNPath(); 
             
@@ -42,6 +37,12 @@ namespace Unity.Mocks.Tests
             }
 
             #endif
+
+            // $ note: do not use TestContext.CurrentContext.TestDirectory - it is set to Library/ScriptAssemblies in Unity
+            
+            BaseDir = NPath.CurrentDirectory
+                .Combine("Temp", nameof(TestFileSystemFixture), "test_fs", TestContext.CurrentContext.GetFixtureName())
+                .CreateDirectory();
         }
 
         [OneTimeTearDown]
