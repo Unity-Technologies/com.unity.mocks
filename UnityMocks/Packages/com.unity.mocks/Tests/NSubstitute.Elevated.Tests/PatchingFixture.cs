@@ -26,9 +26,6 @@ namespace NSubstitute.Elevated.Tests
             MockInjector = new MockInjector(BaseDir);
         }
 
-        [OneTimeTearDown]
-        public void OneTimeTearDownPatching() => MockInjector.Dispose();
-
         protected NPath Compile(string testAssemblyName, string sourceCode, params string[] dependentAssemblyNames)
         {
             // prefix the assembly name because they are globally unique and don't want to ever collide

@@ -140,16 +140,6 @@ namespace NSubstitute.Weaver
                 foreach (var method in type.Methods)
                     Patch(method);
 
-                void AddField(string fieldName, FieldAttributes fieldAttributes)
-                {
-                    type.Fields.Add(new FieldDefinition(fieldName,
-                            FieldAttributes.Private | fieldAttributes,
-                            type.Module.TypeSystem.Object));
-                }
-
-                AddField(MockConstants.InjectedMockStaticDataName, FieldAttributes.Static);
-                AddField(MockConstants.InjectedMockDataName, 0);
-
                 AddMockCtor(type);
             }
             catch (Exception e)
@@ -160,12 +150,16 @@ namespace NSubstitute.Weaver
 
         public static bool IsPatched(TypeDefinition type)
         {
-            var mockStaticField = type.Fields.SingleOrDefault(f => f.Name == MockConstants.InjectedMockStaticDataName);
+            return false;
+            
+            // attach [Mocked] attribute (if test mode option set for patcher) to method instead of this
+            
+/*            var mockStaticField = type.Fields.SingleOrDefault(f => f.Name == MockConstants.InjectedMockStaticDataName);
             var mockField = type.Fields.SingleOrDefault(f => f.Name == MockConstants.InjectedMockDataName);
             if ((mockStaticField != null) != (mockField != null))
                 throw new Exception("Unexpected mismatch between static and instance mock injected fields");
 
-            return mockStaticField != null;
+            return mockStaticField != null;*/
         }
 
         void AddMockCtor(TypeDefinition type)

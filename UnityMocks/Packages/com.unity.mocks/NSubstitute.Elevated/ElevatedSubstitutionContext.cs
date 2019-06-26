@@ -3,18 +3,19 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using NSubstitute.Core;
 using NSubstitute.Core.Arguments;
+using NSubstitute.Elevated;
 using NSubstitute.Exceptions;
 using NSubstitute.Routing;
 using Unity.Utils;
 
-namespace NSubstitute.Elevated
+namespace NSubstitute
 {
     // motivation:
     //
     //   1. it's the clean way to hook in our own proxy factory to the nsub machinery
     //   2. provide access to the sub manager so patched assemblies can route hooked calls through nsub (the so-called 'elevated' mock part)
     //
-    public class ElevatedSubstitutionContext : ISubstitutionContext
+    public class ElevatedSubstitutionContext : ISubstitutionContext, IDisposable
     {
         readonly ISubstitutionContext m_Forwarder;
         readonly ISubstituteFactory m_ElevatedSubstituteFactory;
@@ -39,9 +40,13 @@ namespace NSubstitute.Elevated
                     if (SubstitutionContext.Current != thisContext)
                         throw new SubstituteException("Unexpected hook in place of ours");
                     SubstitutionContext.Current = hookedContext;
+                    
+                    thisContext.Dispose();
                 });
         }
 
+        public void Dispose() => ElevatedSubstituteManager.Dispose();
+        
         internal ElevatedSubstituteManager ElevatedSubstituteManager { get; }
 
         class ElevatedCallRouterFactory : ICallRouterFactory

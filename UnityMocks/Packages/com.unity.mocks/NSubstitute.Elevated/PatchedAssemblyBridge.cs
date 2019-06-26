@@ -10,13 +10,6 @@ using Unity.Utils;
 // we do not want used from normal client api
 namespace NSubstitute.Elevated.Internals
 {
-    public static class MockConstants
-    {
-        public const string
-            InjectedMockStaticDataName = "__mock__staticData",
-            InjectedMockDataName = "__mock__data";
-    }
-
     // used when generating mocked default ctors
     public class MockPlaceholderType {}
 
@@ -42,7 +35,7 @@ namespace NSubstitute.Elevated.Internals
             if (method.IsGenericMethodDefinition)
                 method = method.MakeGenericMethod(methodGenericTypes);
 
-            return elevated.ElevatedSubstituteManager.TryMock(actualType, instance, mockedReturnType, out mockedReturnValue, method, methodGenericTypes, args);
+            return elevated.ElevatedSubstituteManager.TryMock(actualType, instance, mockedReturnType, out mockedReturnValue, method, args);
         }
     }
 }

@@ -32,85 +32,84 @@ namespace NSubstitute.Weaver
 
             var toProcess = new List<NPath> { testAssemblyPath.FileMustExist() };
             var patchResults = new Dictionary<string, PatchResult>(StringComparer.OrdinalIgnoreCase);
-            using (var mockInjector = new MockInjector(testAssemblyPath.Parent.Combine("NSubstitute.Elevated")))
+            var mockInjector = new MockInjector(testAssemblyPath.Parent.Combine("NSubstitute.Elevated"));
+            
+            for (var toProcessIndex = 0; toProcessIndex < toProcess.Count; ++toProcessIndex)
             {
-                for (var toProcessIndex = 0; toProcessIndex < toProcess.Count; ++toProcessIndex)
+                var assemblyToPatchPath = toProcess[toProcessIndex];
+
+                // as we accumulate dependencies recursively, we will probably get some duplicates we can early-out on
+                if (patchResults.ContainsKey(assemblyToPatchPath))
+                    continue;
+
+                using (var assemblyToPatch = AssemblyDefinition.ReadAssembly(assemblyToPatchPath))
                 {
-                    var assemblyToPatchPath = toProcess[toProcessIndex];
+                    GatherReferences(assemblyToPatchPath, assemblyToPatch);
 
-                    // as we accumulate dependencies recursively, we will probably get some duplicates we can early-out on
-                    if (patchResults.ContainsKey(assemblyToPatchPath))
-                        continue;
-
-                    using (var assemblyToPatch = AssemblyDefinition.ReadAssembly(assemblyToPatchPath))
-                    {
-                        GatherReferences(assemblyToPatchPath, assemblyToPatch);
-
-                        var patchResult = TryPatch(assemblyToPatchPath, assemblyToPatch);
-                        patchResults.Add(assemblyToPatchPath, patchResult);
-                    }
+                    var patchResult = TryPatch(assemblyToPatchPath, assemblyToPatch);
+                    patchResults.Add(assemblyToPatchPath, patchResult);
                 }
+            }
 
-                void GatherReferences(NPath assemblyToPatchPath, AssemblyDefinition assemblyToPatch)
+            void GatherReferences(NPath assemblyToPatchPath, AssemblyDefinition assemblyToPatch)
+            {
+                foreach (var referencedAssembly in assemblyToPatch.Modules.SelectMany(m => m.AssemblyReferences))
                 {
-                    foreach (var referencedAssembly in assemblyToPatch.Modules.SelectMany(m => m.AssemblyReferences))
-                    {
-                        // only patch dll's we "own", that are in the same folder as the test assembly
-                        var referencedAssemblyPath = assemblyToPatchPath.Parent.Combine(referencedAssembly.Name + ".dll");
+                    // only patch dll's we "own", that are in the same folder as the test assembly
+                    var referencedAssemblyPath = assemblyToPatchPath.Parent.Combine(referencedAssembly.Name + ".dll");
 
-                        if (referencedAssemblyPath.FileExists())
-                            toProcess.Add(referencedAssemblyPath);
-                        else if (!patchResults.ContainsKey(referencedAssembly.Name))
-                            patchResults.Add(referencedAssembly.Name, new PatchResult(referencedAssembly.Name, null, PatchState.IgnoredForeignAssembly));
-                    }
+                    if (referencedAssemblyPath.FileExists())
+                        toProcess.Add(referencedAssemblyPath);
+                    else if (!patchResults.ContainsKey(referencedAssembly.Name))
+                        patchResults.Add(referencedAssembly.Name, new PatchResult(referencedAssembly.Name, null, PatchState.IgnoredForeignAssembly));
                 }
+            }
 
-                PatchResult TryPatch(NPath assemblyToPatchPath, AssemblyDefinition assemblyToPatch)
+            PatchResult TryPatch(NPath assemblyToPatchPath, AssemblyDefinition assemblyToPatch)
+            {
+                var alreadyPatched = mockInjector.IsPatched(assemblyToPatch);
+                var cannotPatch = assemblyToPatch.Name.HasPublicKey;
+
+                if (assemblyToPatchPath == testAssemblyPath && (patchOptions & PatchOptions.PatchTestAssembly) == 0)
                 {
-                    var alreadyPatched = mockInjector.IsPatched(assemblyToPatch);
-                    var cannotPatch = assemblyToPatch.Name.HasPublicKey;
-
-                    if (assemblyToPatchPath == testAssemblyPath && (patchOptions & PatchOptions.PatchTestAssembly) == 0)
-                    {
-                        if (alreadyPatched)
-                            throw new Exception("Unexpected already-patched test assembly, yet we want PatchTestAssembly.No");
-                        if (cannotPatch)
-                            throw new Exception("Cannot patch an assembly with a strong name");
-                        return new PatchResult(assemblyToPatchPath, null, PatchState.IgnoredTestAssembly);
-                    }
-
                     if (alreadyPatched)
-                        return new PatchResult(assemblyToPatchPath, null, PatchState.AlreadyPatched);
+                        throw new Exception("Unexpected already-patched test assembly, yet we want PatchTestAssembly.No");
                     if (cannotPatch)
-                        return new PatchResult(assemblyToPatchPath, null, PatchState.IgnoredForeignAssembly);
-                    
-                    return Patch(assemblyToPatchPath, assemblyToPatch);
+                        throw new Exception("Cannot patch an assembly with a strong name");
+                    return new PatchResult(assemblyToPatchPath, null, PatchState.IgnoredTestAssembly);
                 }
 
-                PatchResult Patch(NPath assemblyToPatchPath, AssemblyDefinition assemblyToPatch)
-                {
-                    mockInjector.Patch(assemblyToPatch);
+                if (alreadyPatched)
+                    return new PatchResult(assemblyToPatchPath, null, PatchState.AlreadyPatched);
+                if (cannotPatch)
+                    return new PatchResult(assemblyToPatchPath, null, PatchState.IgnoredForeignAssembly);
+                
+                return Patch(assemblyToPatchPath, assemblyToPatch);
+            }
 
-                    // atomic write of file with backup
-                    // TODO: skip backup if existing file already patched. want the .orig to only be the unpatched file.
+            PatchResult Patch(NPath assemblyToPatchPath, AssemblyDefinition assemblyToPatch)
+            {
+                mockInjector.Patch(assemblyToPatch);
 
-                    // write to tmp and release the lock
-                    var tmpPath = assemblyToPatchPath.ChangeExtension(".tmp");
-                    tmpPath.DeleteIfExists();
-                    assemblyToPatch.Write(tmpPath); // $$$ , new WriterParameters { WriteSymbols = true }); see https://github.com/jbevain/cecil/issues/421
-                    assemblyToPatch.Dispose();
+                // atomic write of file with backup
+                // TODO: skip backup if existing file already patched. want the .orig to only be the unpatched file.
 
-                    if ((patchOptions & PatchOptions.SkipPeVerify) == 0)
-                        PeVerify.Verify(tmpPath);
+                // write to tmp and release the lock
+                var tmpPath = assemblyToPatchPath.ChangeExtension(".tmp");
+                tmpPath.DeleteIfExists();
+                assemblyToPatch.Write(tmpPath); // $$$ , new WriterParameters { WriteSymbols = true }); see https://github.com/jbevain/cecil/issues/421
+                assemblyToPatch.Dispose();
 
-                    // move the actual file to backup, and move the tmp to actual
-                    var backupPath = GetPatchBackupPathFor(assemblyToPatchPath);
-                    File.Replace(tmpPath, assemblyToPatchPath, backupPath);
+                if ((patchOptions & PatchOptions.SkipPeVerify) == 0)
+                    PeVerify.Verify(tmpPath);
 
-                    // TODO: move pdb file too
+                // move the actual file to backup, and move the tmp to actual
+                var backupPath = GetPatchBackupPathFor(assemblyToPatchPath);
+                File.Replace(tmpPath, assemblyToPatchPath, backupPath);
 
-                    return new PatchResult(assemblyToPatchPath, backupPath, PatchState.Patched);
-                }
+                // TODO: move pdb file too
+
+                return new PatchResult(assemblyToPatchPath, backupPath, PatchState.Patched);
             }
 
             return patchResults.Values;

@@ -52,6 +52,43 @@ namespace Unity.Utils
             return found;
         }
 
+        public static TValue GetOrAdd<TKey, TValue>([NotNull] this IDictionary<TKey, TValue> @this, TKey key, [NotNull] Func<TValue> createFunc)
+        {
+            if (@this.TryGetValue(key, out var found))
+                return found;
+
+            found = createFunc();
+            @this.Add(key, found);
+            return found;
+        }
+
+        public static bool TryAdd<TKey, TValue>([NotNull] this IDictionary<TKey, TValue> @this, TKey key, TValue value)
+        {
+            if (@this.ContainsKey(key))
+                return false;
+
+            @this.Add(key, value);
+            return true;
+        }
+
+        public static bool TryAdd<TKey, TValue>([NotNull] this IDictionary<TKey, TValue> @this, TKey key, [NotNull] Func<TKey, TValue> createFunc)
+        {
+            if (@this.ContainsKey(key))
+                return false;
+
+            @this.Add(key, createFunc(key));
+            return true;
+        }
+
+        public static bool TryAdd<TKey, TValue>([NotNull] this IDictionary<TKey, TValue> @this, TKey key, [NotNull] Func<TValue> createFunc)
+        {
+            if (@this.ContainsKey(key))
+                return false;
+
+            @this.Add(key, createFunc());
+            return true;
+        }
+
         public static IDictionary<TKey, TValue> AddRangeOverride<TKey, TValue>([NotNull] this IDictionary<TKey, TValue> @this, [NotNull] IDictionary<TKey, TValue> other)
         {
             foreach (var item in other)

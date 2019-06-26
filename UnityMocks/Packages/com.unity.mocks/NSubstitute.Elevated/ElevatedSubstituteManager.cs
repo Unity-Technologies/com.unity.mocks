@@ -12,17 +12,25 @@ using Unity.Utils;
 
 namespace NSubstitute.Elevated
 {
-    class ElevatedSubstituteManager : IProxyFactory
+    class ElevatedSubstituteManager : IProxyFactory, IDisposable
     {
         readonly CallFactory m_CallFactory;
         readonly IProxyFactory m_DefaultProxyFactory = new ProxyFactory(new DelegateProxyFactory(), new CastleDynamicProxyFactory());
         readonly object[] k_MockedCtorParams = { new MockPlaceholderType() };
+        Dictionary<object, ICallRouter> m_Routers = new Dictionary<object, ICallRouter>();
 
         public ElevatedSubstituteManager(ISubstitutionContext substitutionContext)
         {
             m_CallFactory = new CallFactory(substitutionContext);
         }
 
+        public void Dispose()
+        {
+            var leaks = m_Routers.Keys.OfType<Type>().StringJoin(", ");
+            if (!leaks.IsEmpty())
+                throw new Exception("Test forgot to dispose SubstituteStatic.For<T>() where T is " + leaks);
+        }
+        
         object IProxyFactory.GenerateProxy(ICallRouter callRouter, Type typeToProxy, Type[] additionalInterfaces, object[] constructorArguments)
         {
             // TODO:
@@ -60,6 +68,8 @@ namespace NSubstitute.Elevated
 
                 switch (substituteConfig)
                 {
+                    // TODO: i misunderstood "override all" and "call base", so fix these
+                    
                     case SubstituteConfig.OverrideAllCalls:
 
                         // overriding all calls includes the ctor, so it makes no sense for the user to pass in ctor args
@@ -70,52 +80,42 @@ namespace NSubstitute.Elevated
                         constructorArguments = k_MockedCtorParams;
                         break;
                     case SubstituteConfig.CallBaseByDefault:
+                        // TODO: this is just wrong
                         var castleDynamicProxyFactory = new CastleDynamicProxyFactory();
                         return castleDynamicProxyFactory.GenerateProxy(callRouter, typeToProxy, additionalInterfaces, constructorArguments);
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
 
-//                var proxyWrap = Activator.CreateInstanceFrom(patchAllDependentAssemblies[1].Path, typeToProxy.FullName, false,
-//                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.CreateInstance, null,
-//                    constructorArguments, null, null);
-//                proxy = proxyWrap.Unwrap();
-
                 proxy = Activator.CreateInstance(typeToProxy, constructorArguments);
-                GetRouterField(proxy.GetType()).SetValue(proxy, callRouter);
+                m_Routers.Add(proxy, callRouter);
             }
 
             return proxy;
         }
-
+        
         object CreateStaticProxy(Type typeToProxy, ICallRouter callRouter)
         {
-            var field = GetStaticRouterField(typeToProxy);
-            if (field.GetValue(null) != null)
+            if (!m_Routers.TryAdd(typeToProxy, callRouter))
                 throw new SubstituteException("Cannot substitute the same type twice (did you forget to Dispose() your previous substitute?)");
-
-            field.SetValue(null, callRouter);
 
             return new SubstituteStatic.Proxy(new DelegateDisposable(() =>
                 {
-                    var found = field.GetValue(null);
-                    if (found == null)
+                    if (!m_Routers.TryGetValue(typeToProxy, out var found))
                         throw new SubstituteException("Unexpected static unmock of an already-unmocked type");
+
                     if (found != callRouter)
                         throw new SubstituteException("Discovered unexpected call router attached in static mock context");
 
-                    field.SetValue(null, null);
+                    m_Routers.Remove(typeToProxy);
                 }));
         }
 
         // called from patched assembly code via the PatchedAssemblyBridge. return true if the mock is handling the behavior.
         // false means that the original implementation should run.
-        public bool TryMock(Type actualType, object instance, Type mockedReturnType, out object mockedReturnValue, MethodInfo method, Type[] methodGenericTypes, object[] args)
+        public bool TryMock(Type actualType, object instance, Type mockedReturnType, out object mockedReturnValue, MethodInfo method, object[] args)
         {
-            var field = instance == null ? GetStaticRouterField(actualType) : GetRouterField(actualType);
-            var callRouter = (ICallRouter)field?.GetValue(instance);
-
-            if (callRouter != null)
+            if (m_Routers.TryGetValue(instance ?? actualType, out var callRouter))
             {
                 var shouldCallOriginalMethod = false;
                 var call = m_CallFactory.Create(method, args, instance, () => shouldCallOriginalMethod = true);
@@ -127,29 +127,5 @@ namespace NSubstitute.Elevated
             mockedReturnValue = mockedReturnType.GetDefaultValue();
             return false;
         }
-
-        // motivation for router mapping being stored with the type/instance:
-        //
-        //   1. avoid problem of "gc leak vs. substitute requires disposal" by storing the router link in the instance
-        //   2. support for struct instances (only possible to associate call routers with individual structs from the inside)
-        //   3. is a simple way to check that a type has been patched
-        //
-        FieldInfo GetStaticRouterField(Type type) => m_RouterStaticFieldCache.GetOrAdd(type, t => GetRouterField(t, MockConstants.InjectedMockStaticDataName, BindingFlags.Static));
-        FieldInfo GetRouterField(Type type) => m_RouterFieldCache.GetOrAdd(type, t => GetRouterField(t, MockConstants.InjectedMockDataName, BindingFlags.Instance));
-
-        static FieldInfo GetRouterField(IReflect type, string fieldName, BindingFlags bindingFlags)
-        {
-            var field = type.GetField(fieldName, bindingFlags | BindingFlags.NonPublic);
-            if (field == null)
-                throw new SubstituteException("Cannot substitute for non-patched types");
-
-            if (field.FieldType != typeof(object))
-                throw new SubstituteException("Unexpected mock data type found on patched type");
-
-            return field;
-        }
-
-        readonly Dictionary<Type, FieldInfo> m_RouterStaticFieldCache = new Dictionary<Type, FieldInfo>();
-        readonly Dictionary<Type, FieldInfo> m_RouterFieldCache = new Dictionary<Type, FieldInfo>();
     }
 }
