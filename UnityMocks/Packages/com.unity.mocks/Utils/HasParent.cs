@@ -6,7 +6,7 @@ using System;
 // ability to write abstract graph algorithms and then easily map onto types with
 // existing parent structures.
 
-namespace Unity.Coding.Utils
+namespace Unity.Mocks.Utils
 {
     public interface IHasParent<out T>
     {
